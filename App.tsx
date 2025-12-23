@@ -1,18 +1,34 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, LayoutList, Grip } from 'lucide-react';
-import { Sample, SampleFilter, Platform } from './types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Plus, LayoutList, Grip, LogOut, User as UserIcon } from 'lucide-react';
+import { Sample, SampleFilter, Platform, User } from './types';
 import { MOCK_SAMPLES } from './constants';
 import { SampleTable } from './components/SampleTable';
 import { ShelfDistribution } from './components/ShelfDistribution';
 import { FilterBar } from './components/FilterBar';
 import { StatsCards } from './components/StatsCards';
 import { SampleFormModal } from './components/SampleFormModal';
+import { AuthPage } from './components/AuthPage';
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
   const [samples, setSamples] = useState<Sample[]>(MOCK_SAMPLES);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSample, setEditingSample] = useState<Sample | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'shelf'>('list');
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Check for persistent login
+  useEffect(() => {
+    const storedUser = localStorage.getItem('app_current_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        localStorage.removeItem('app_current_user');
+      }
+    }
+    setIsInitializing(false);
+  }, []);
 
   const [filter, setFilter] = useState<SampleFilter>({
     search: '',
@@ -20,6 +36,15 @@ export default function App() {
     platform: 'All',
     dateRange: 'All'
   });
+
+  const handleLogin = (user: User) => {
+    setUser(user);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('app_current_user');
+    setUser(null);
+  };
 
   const handleSaveSample = (newSample: Sample) => {
     if (editingSample) {
@@ -90,6 +115,16 @@ export default function App() {
     });
   }, [samples, filter]);
 
+  if (isInitializing) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>;
+  }
+
+  if (!user) {
+    return <AuthPage onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-10">
       
@@ -102,18 +137,38 @@ export default function App() {
                 <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
                   <span className="text-white font-bold text-lg">L</span>
                 </div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
+                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500 hidden sm:block">
                   直播选品仓储系统
+                </h1>
+                <h1 className="text-xl font-bold text-blue-700 sm:hidden">
+                  LiveWMS
                 </h1>
               </div>
             </div>
+            
+            {/* User Profile & Logout */}
             <div className="flex items-center space-x-4">
-               <button className="text-gray-500 hover:text-gray-700 font-medium text-sm">
-                 帮助中心
-               </button>
-               <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs border border-blue-200">
-                 AD
+               <div className="flex items-center space-x-2 px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+                 {user.avatar ? (
+                   <img src={user.avatar} alt="User" className="w-6 h-6 rounded-full" />
+                 ) : (
+                   <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                     <UserIcon size={14} />
+                   </div>
+                 )}
+                 <span className="text-sm font-medium text-gray-700 hidden sm:block">{user.name}</span>
                </div>
+               
+               <div className="h-6 w-px bg-gray-200 mx-2"></div>
+               
+               <button 
+                 onClick={handleLogout}
+                 className="flex items-center text-gray-500 hover:text-red-600 font-medium text-sm transition-colors"
+                 title="退出登录"
+               >
+                 <LogOut size={18} className="sm:mr-1" />
+                 <span className="hidden sm:inline">退出</span>
+               </button>
             </div>
           </div>
         </div>

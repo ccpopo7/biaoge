@@ -37,6 +37,13 @@ export enum Platform {
   Other = '其他'
 }
 
+export interface User {
+  username: string;
+  password?: string; // Optional for security when passing around
+  name: string;      // Display name
+  avatar?: string;
+}
+
 export interface Sample {
   id: string;
   name: string; // 产品名称

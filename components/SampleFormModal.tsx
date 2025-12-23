@@ -22,7 +22,7 @@ const emptySample: Omit<Sample, 'id'> = {
   price: 0,
   commissionRate: 0,
   mechanism: '',
-  platform: Platform.Douyin,
+  platform: [Platform.Douyin], // Default as array
   selectionCount: 0,
   specs: '',
   businessContact: '',
@@ -66,6 +66,19 @@ export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClos
         ? parseFloat(value) || 0 
         : value
     }));
+  };
+
+  const handlePlatformToggle = (platform: Platform) => {
+    setFormData(prev => {
+      const currentPlatforms = prev.platform as Platform[];
+      if (currentPlatforms.includes(platform)) {
+        // Prevent removing the last one if we want to enforce at least one, 
+        // but let's allow empty for now or standard toggle
+        return { ...prev, platform: currentPlatforms.filter(p => p !== platform) };
+      } else {
+        return { ...prev, platform: [...currentPlatforms, platform] };
+      }
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,17 +345,28 @@ export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClos
                     <span className="absolute right-3 top-2 text-gray-500">%</span>
                   </div>
                 </div>
+                
+                {/* Platform Multi-select */}
                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">直播平台</label>
-                   <select 
-                      name="platform" 
-                      value={formData.platform} 
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    >
-                      {PLATFORM_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">直播平台 (可多选)</label>
+                   <div className="flex flex-wrap gap-2">
+                     {PLATFORM_OPTIONS.map(p => (
+                       <button
+                         key={p}
+                         type="button"
+                         onClick={() => handlePlatformToggle(p)}
+                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                           (formData.platform as Platform[]).includes(p)
+                             ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                         }`}
+                       >
+                         {p}
+                       </button>
+                     ))}
+                   </div>
                 </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">直播机制</label>
                   <input 

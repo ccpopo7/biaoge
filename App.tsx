@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, LayoutList, Grip } from 'lucide-react';
-import { Sample, SampleFilter } from './types';
+import { Sample, SampleFilter, Platform } from './types';
 import { MOCK_SAMPLES } from './constants';
 import { SampleTable } from './components/SampleTable';
 import { ShelfDistribution } from './components/ShelfDistribution';
@@ -62,8 +62,8 @@ export default function App() {
       // 2. Category
       if (filter.category !== 'All' && sample.category !== filter.category) return false;
 
-      // 3. Platform
-      if (filter.platform !== 'All' && sample.platform !== filter.platform) return false;
+      // 3. Platform (Check if array includes)
+      if (filter.platform !== 'All' && !sample.platform.includes(filter.platform as Platform)) return false;
 
       // 4. Date Range
       if (filter.dateRange !== 'All') {

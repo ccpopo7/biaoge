@@ -214,9 +214,13 @@ export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDel
                   {/* Live Info */}
                   <td className="px-6 py-4 align-top">
                      <div className="space-y-2 mt-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded flex items-center w-fit ${getPlatformColor(sample.platform)}`}>
-                          <Video size={10} className="mr-1" /> {sample.platform}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {sample.platform.map(p => (
+                            <span key={p} className={`text-[10px] px-2 py-0.5 rounded flex items-center w-fit ${getPlatformColor(p)}`}>
+                              <Video size={10} className="mr-1" /> {p}
+                            </span>
+                          ))}
+                        </div>
                         <div className="text-xs text-gray-600 bg-gray-100 p-1.5 rounded border border-gray-200 max-w-[150px] line-clamp-2" title={sample.mechanism}>
                           {sample.mechanism}
                         </div>

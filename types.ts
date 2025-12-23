@@ -54,7 +54,7 @@ export interface Sample {
   price: number; // Selling price
   commissionRate: number; // Percentage (e.g., 20 for 20%)
   mechanism: string; // e.g., "Buy 1 Get 1", "Gift with purchase"
-  platform: Platform;
+  platform: Platform[]; // Changed to array for multi-select
   selectionCount: number; // How many times it has been picked for live
   specs: string; // 规格 e.g., "500ml", "Red/L"
   

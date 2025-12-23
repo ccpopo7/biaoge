@@ -26,7 +26,9 @@ export const MOCK_SAMPLES: Sample[] = [
     procurementPrice: 180,
     includeShippingFee: true,
     isFreeShipping: true,
-    assistantAnchor: '小美'
+    assistantAnchor: '小美',
+    remarks: '重点推荐品！质检报告已上传。参考链接：https://www.kiehls.com.cn',
+    remarkImages: ['https://picsum.photos/200/200?random=101', 'https://picsum.photos/200/200?random=102']
   },
   {
     id: '2',
@@ -50,7 +52,9 @@ export const MOCK_SAMPLES: Sample[] = [
     procurementPrice: 25,
     includeShippingFee: false,
     isFreeShipping: false,
-    assistantAnchor: '阿强'
+    assistantAnchor: '阿强',
+    remarks: '注意保存温度，必须冷冻。',
+    remarkImages: []
   },
   {
     id: '3',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, MapPin, Video, ShoppingBag, Truck, User, Phone } from 'lucide-react';
+import { Edit2, Trash2, MapPin, Video, ShoppingBag, Truck, User, Phone, Paperclip } from 'lucide-react';
 import { Sample, Platform, Category } from '../types';
 
 interface SampleTableProps {
@@ -50,6 +50,20 @@ const getCategoryBadge = (category: Category) => {
     [Category.Alcohol]: 'bg-red-50 text-red-600 border-red-200',
   };
   return colors[category] || 'bg-gray-100 text-gray-700 border-gray-200';
+};
+
+const renderTextWithLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => 
+    urlRegex.test(part) ? (
+      <a key={index} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all" onClick={(e) => e.stopPropagation()}>
+        {part}
+      </a>
+    ) : (
+      <span key={index}>{part}</span>
+    )
+  );
 };
 
 export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDelete }) => {
@@ -108,7 +122,7 @@ export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDel
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 tracking-wider">
-                <th className="px-6 py-4 font-semibold">产品信息 / 对接</th>
+                <th className="px-6 py-4 font-semibold w-[30%]">产品信息 / 对接</th>
                 <th className="px-6 py-4 font-semibold">仓库位置 / 数量</th>
                 <th className="px-6 py-4 font-semibold">直播价格 / 佣金</th>
                 <th className="px-6 py-4 font-semibold">机制 / 平台</th>
@@ -131,11 +145,11 @@ export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDel
                           onMouseLeave={handleMouseLeave}
                         />
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         {sample.brandName && (
                           <div className="text-xs text-gray-500 mb-0.5">{sample.brandName}</div>
                         )}
-                        <h4 className="font-semibold text-gray-900 line-clamp-1 w-48" title={sample.name}>{sample.name}</h4>
+                        <h4 className="font-semibold text-gray-900 line-clamp-1 w-full" title={sample.name}>{sample.name}</h4>
                         <div className="mt-1 flex flex-wrap gap-2">
                            <span className={`text-xs px-2 py-0.5 rounded-full border ${getCategoryBadge(sample.category)}`}>
                             {sample.category}
@@ -160,6 +174,33 @@ export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDel
                         </div>
                       )}
                     </div>
+                    
+                    {/* Remarks Section */}
+                    {(sample.remarks || (sample.remarkImages && sample.remarkImages.length > 0)) && (
+                      <div className="mt-3 bg-amber-50 rounded border border-amber-100 p-2 text-xs text-amber-900">
+                         {sample.remarks && (
+                           <div className="mb-1.5 break-words whitespace-pre-wrap">
+                             <span className="font-semibold text-amber-700 mr-1">备注:</span>
+                             {renderTextWithLinks(sample.remarks)}
+                           </div>
+                         )}
+                         {sample.remarkImages && sample.remarkImages.length > 0 && (
+                           <div className="flex flex-wrap gap-1 mt-1">
+                             {sample.remarkImages.map((img, idx) => (
+                               <div key={idx} className="w-8 h-8 rounded border border-amber-200 overflow-hidden bg-white cursor-zoom-in relative group/img">
+                                 <img 
+                                   src={img} 
+                                   alt="remark" 
+                                   className="w-full h-full object-contain"
+                                   onMouseMove={(e) => handleMouseMove(e, img)}
+                                   onMouseLeave={handleMouseLeave}
+                                 />
+                               </div>
+                             ))}
+                           </div>
+                         )}
+                      </div>
+                    )}
                   </td>
 
                   {/* Warehouse Location */}

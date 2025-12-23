@@ -74,6 +74,10 @@ export interface Sample {
   
   isFreeShipping: boolean; // 是否包邮 (Live side)
   assistantAnchor: string; // 助播
+
+  // Remarks
+  remarks?: string; // 备注文字 (supports links)
+  remarkImages?: string[]; // 备注图片
 }
 
 export type SampleFilter = {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Save } from 'lucide-react';
+import { X, Upload, Save, Plus, Trash } from 'lucide-react';
 import { Sample, Category, Platform } from '../types';
 import { CATEGORY_OPTIONS, PLATFORM_OPTIONS } from '../constants';
 
@@ -31,21 +31,27 @@ const emptySample: Omit<Sample, 'id'> = {
   procurementPrice: 0,
   includeShippingFee: false,
   isFreeShipping: true,
-  assistantAnchor: ''
+  assistantAnchor: '',
+  remarks: '',
+  remarkImages: []
 };
 
 export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState<Omit<Sample, 'id'>>({ ...emptySample });
   const [previewImage, setPreviewImage] = useState<string>('');
+  // Use local state for remark images preview as well
+  const [remarkImages, setRemarkImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (initialData) {
       const { id, ...rest } = initialData;
       setFormData(rest);
       setPreviewImage(rest.imageUrl);
+      setRemarkImages(rest.remarkImages || []);
     } else {
       setFormData({ ...emptySample, entryDate: new Date().toISOString().split('T')[0] });
       setPreviewImage('');
+      setRemarkImages([]);
     }
   }, [initialData, isOpen]);
 
@@ -72,8 +78,6 @@ export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClos
     setFormData(prev => {
       const currentPlatforms = prev.platform as Platform[];
       if (currentPlatforms.includes(platform)) {
-        // Prevent removing the last one if we want to enforce at least one, 
-        // but let's allow empty for now or standard toggle
         return { ...prev, platform: currentPlatforms.filter(p => p !== platform) };
       } else {
         return { ...prev, platform: [...currentPlatforms, platform] };
@@ -85,22 +89,44 @@ export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClos
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const reader = new FileReader();
-
       reader.onloadend = () => {
         const result = reader.result as string;
         setPreviewImage(result);
         setFormData(prev => ({ ...prev, imageUrl: result }));
       };
-
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemarkImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          setRemarkImages(prev => [...prev, result]);
+        };
+        // Cast file to Blob to fix TypeScript error where inferred type is unknown
+        reader.readAsDataURL(file as Blob);
+      });
+    }
+  };
+
+  const removeRemarkImage = (index: number) => {
+    setRemarkImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const id = initialData?.id || Math.random().toString(36).substr(2, 9);
-    // Use the previewImage (base64) if available, otherwise fallback or empty
-    onSave({ id, ...formData, imageUrl: previewImage || 'https://picsum.photos/200/200' });
+    onSave({ 
+      id, 
+      ...formData, 
+      imageUrl: previewImage || 'https://picsum.photos/200/200',
+      remarkImages: remarkImages
+    });
     onClose();
   };
 
@@ -240,7 +266,7 @@ export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClos
               </div>
             </div>
 
-             {/* Section 3: Business & Merchant Info (New) */}
+             {/* Section 3: Business & Merchant Info */}
              <div>
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">商务与商家信息</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -404,6 +430,54 @@ export const SampleFormModal: React.FC<SampleFormModalProps> = ({ isOpen, onClos
                    </div>
                 </div>
               </div>
+            </div>
+
+            {/* Section 5: Remarks (New) */}
+            <div>
+               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">备注信息</h3>
+               <div className="space-y-4">
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">备注说明 (支持链接)</label>
+                    <textarea 
+                      name="remarks"
+                      value={formData.remarks || ''}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                      placeholder="填写样品相关备注，如质检说明、注意事项等。输入网址可自动识别。"
+                    />
+                 </div>
+                 
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">附件图片</label>
+                    <div className="flex flex-wrap gap-4">
+                      {remarkImages.map((img, index) => (
+                        <div key={index} className="w-24 h-24 relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                          <img src={img} alt={`Remark ${index}`} className="w-full h-full object-contain p-1" />
+                          <button 
+                            type="button"
+                            onClick={() => removeRemarkImage(index)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash size={12} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      <div className="w-24 h-24 relative border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-white">
+                        <Plus size={24} className="text-gray-400" />
+                        <span className="text-[10px] text-gray-400 mt-1">添加图片</span>
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={handleRemarkImageUpload}
+                        />
+                      </div>
+                    </div>
+                 </div>
+               </div>
             </div>
 
           </form>

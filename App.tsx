@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, LayoutList, Grip, LogOut, User as UserIcon } from 'lucide-react';
+import { Plus, LayoutList, Grip, LogOut, User as UserIcon, FileSpreadsheet, Upload } from 'lucide-react';
 import { Sample, SampleFilter, Platform, User } from './types';
 import { MOCK_SAMPLES } from './constants';
 import { SampleTable } from './components/SampleTable';
@@ -8,14 +8,18 @@ import { FilterBar } from './components/FilterBar';
 import { StatsCards } from './components/StatsCards';
 import { SampleFormModal } from './components/SampleFormModal';
 import { AuthPage } from './components/AuthPage';
+import { exportSamplesToExcel } from './utils/excelExport';
+import { ImportModal } from './components/ImportModal';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [samples, setSamples] = useState<Sample[]>(MOCK_SAMPLES);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingSample, setEditingSample] = useState<Sample | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'shelf'>('list');
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Check for persistent login
   useEffect(() => {
@@ -52,6 +56,11 @@ export default function App() {
     } else {
       setSamples(prev => [newSample, ...prev]);
     }
+  };
+
+  const handleImportSamples = (newSamples: Sample[]) => {
+    setSamples(prev => [...newSamples, ...prev]);
+    // Optional: Show a success toast or alert
   };
 
   const handleDeleteSample = (id: string) => {
@@ -114,6 +123,24 @@ export default function App() {
       return true;
     });
   }, [samples, filter]);
+
+  // Export Logic
+  const handleExport = async (dataToExport: Sample[] = filteredSamples) => {
+    if (dataToExport.length === 0) {
+      alert('当前没有可导出的数据');
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      await exportSamplesToExcel(dataToExport);
+    } catch (error) {
+      console.error('Export failed', error);
+      alert('导出失败，请重试');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isInitializing) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -182,13 +209,36 @@ export default function App() {
             <h2 className="text-2xl font-bold text-gray-900">样品总览</h2>
             <p className="text-sm text-gray-500 mt-1">管理所有直播间的样品库存、位置及直播机制数据。</p>
           </div>
-          <button 
-            onClick={openNewModal}
-            className="mt-4 md:mt-0 inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:-translate-y-0.5"
-          >
-            <Plus size={18} className="mr-2" />
-            新增样品入库
-          </button>
+          <div className="flex gap-3 mt-4 md:mt-0 flex-wrap">
+             <button 
+              onClick={() => handleExport(filteredSamples)}
+              disabled={isExporting}
+              className={`inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all ${isExporting ? 'opacity-70 cursor-wait' : 'hover:-translate-y-0.5'}`}
+            >
+              {isExporting ? (
+                 <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+              ) : (
+                 <FileSpreadsheet size={18} className="mr-2 text-green-600" />
+              )}
+              {isExporting ? '导出中...' : '导出表格'}
+            </button>
+            
+            <button 
+              onClick={() => setIsImportModalOpen(true)}
+              className="inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:-translate-y-0.5"
+            >
+              <Upload size={18} className="mr-2 text-blue-600" />
+              导入Excel
+            </button>
+
+            <button 
+              onClick={openNewModal}
+              className="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all hover:-translate-y-0.5"
+            >
+              <Plus size={18} className="mr-2" />
+              新增样品入库
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -227,6 +277,7 @@ export default function App() {
                 samples={filteredSamples} 
                 onEdit={handleEditSample}
                 onDelete={handleDeleteSample}
+                onExport={(sample) => handleExport([sample])}
               />
            ) : (
               <ShelfDistribution samples={filteredSamples} />
@@ -235,12 +286,19 @@ export default function App() {
 
       </main>
 
-      {/* Modal */}
+      {/* Form Modal */}
       <SampleFormModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveSample}
         initialData={editingSample}
+      />
+      
+      {/* Import Modal */}
+      <ImportModal 
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportSamples}
       />
     </div>
   );

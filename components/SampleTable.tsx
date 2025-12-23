@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, MapPin, Video, ShoppingBag, Truck, User, Phone, Paperclip } from 'lucide-react';
+import { Edit2, Trash2, MapPin, Video, ShoppingBag, Truck, User, Phone, Paperclip, FileSpreadsheet } from 'lucide-react';
 import { Sample, Platform, Category } from '../types';
 
 interface SampleTableProps {
   samples: Sample[];
   onEdit: (sample: Sample) => void;
   onDelete: (id: string) => void;
+  onExport: (sample: Sample) => void;
 }
 
 const getPlatformColor = (platform: Platform) => {
@@ -66,7 +67,7 @@ const renderTextWithLinks = (text: string) => {
   );
 };
 
-export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDelete }) => {
+export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDelete, onExport }) => {
   const [hoverState, setHoverState] = useState<{ url: string; x: number; y: number } | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent, url: string) => {
@@ -283,7 +284,14 @@ export const SampleTable: React.FC<SampleTableProps> = ({ samples, onEdit, onDel
 
                   {/* Actions */}
                   <td className="px-6 py-4 text-right align-top">
-                    <div className="flex justify-end space-x-2 mt-2">
+                    <div className="flex justify-end space-x-1 mt-2">
+                      <button 
+                        onClick={() => onExport(sample)}
+                        className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                        title="导出表格"
+                      >
+                        <FileSpreadsheet size={18} />
+                      </button>
                       <button 
                         onClick={() => onEdit(sample)}
                         className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"

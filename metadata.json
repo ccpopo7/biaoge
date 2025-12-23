@@ -1,0 +1,5 @@
+{
+  "name": "LiveStream Sample WMS",
+  "description": "A comprehensive warehouse management system for live streaming samples, tracking inventory locations, pricing, commission rates, and mechanisms.",
+  "requestFramePermissions": []
+}
